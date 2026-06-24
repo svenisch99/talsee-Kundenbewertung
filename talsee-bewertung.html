@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>talsee – Kundenbewertung</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f8f7f5;
+      --white: #ffffff;
+      --text: #1a1a1a;
+      --muted: #6b6b6b;
+      --border: #e2e0dc;
+      --accent: #2c5f8a;
+      --accent-light: #e8f0f7;
+      --danger: #c0392b;
+      --success: #27ae60;
+      --star-active: #2c5f8a;
+      --star-inactive: #d5d2cc;
+      --radius: 10px;
+      --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── ÖFFENTLICHE ANSICHT ── */
+    #public-view {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pub-header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pub-logo {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+
+    .pub-logo span { color: var(--accent); }
+
+    .pub-main {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    .pub-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 48px;
+      width: 100%;
+      max-width: 620px;
+    }
+
+    .pub-card h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .pub-card .subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 36px;
+      line-height: 1.5;
+    }
+
+    .question-block {
+      margin-bottom: 32px;
+    }
+
+    .question-label {
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .question-label .req { color: var(--accent); font-size: 0.8rem; }
+
+    /* Sterne */
+    .stars {
+      display: flex;
+      gap: 8px;
+    }
+
+    .star-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      transition: transform 0.1s;
+    }
+
+    .star-btn:hover { transform: scale(1.15); }
+
+    .star-btn svg { display: block; width: 36px; height: 36px; }
+
+    .star-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 6px;
+      padding: 0 4px;
+    }
+
+    /* Freitext */
+    textarea.ft {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 100px;
+      transition: border-color 0.2s;
+      background: var(--bg);
+    }
+
+    textarea.ft:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--white);
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      width: 100%;
+      justify-content: center;
+      padding: 14px;
+      font-size: 1rem;
+    }
+
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; }
+
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--text);
+      border: 1.5px solid var(--border);
+    }
+
+    .btn-secondary:hover { background: var(--border); }
+
+    .btn-danger {
+      background: #fdf0ef;
+      color: var(--danger);
+      border: 1.5px solid #f5c6c2;
+    }
+
+    .btn-danger:hover { background: #f5c6c2; }
+
+    /* Danke-Screen */
+    .danke-screen {
+      display: none;
+      text-align: center;
+      padding: 20px 0;
+    }
+
+    .danke-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--accent-light);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+
+    .danke-icon svg { width: 32px; height: 32px; color: var(--accent); }
+
+    .danke-screen h2 { font-size: 1.5rem; margin-bottom: 10px; }
+    .danke-screen p { color: var(--muted); margin-bottom: 24px; }
+
+    /* Loading */
+    .loading-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 0;
+      flex-direction: column;
+      gap: 12px;
+      color: var(--muted);
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Admin-Link */
+    .admin-link {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-decoration: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .admin-link:hover { background: var(--border); color: var(--text); }
+
+    /* ── ADMIN-BEREICH ── */
+    #admin-view { display: none; min-height: 100vh; }
+
+    .admin-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background: var(--text);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      flex-shrink: 0;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .sidebar-logo small {
+      display: block;
+      font-size: 0.7rem;
+      font-weight: 400;
+      opacity: 0.5;
+      margin-top: 2px;
+    }
+
+    .sidebar-nav {
+      padding: 16px 0;
+      flex: 1;
+    }
+
+    .nav-section {
+      padding: 8px 20px 4px;
+      font-size: 0.65rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      opacity: 0.4;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 20px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      border: none;
+      background: none;
+      color: rgba(255,255,255,0.75);
+      width: 100%;
+      text-align: left;
+      border-radius: 0;
+    }
+
+    .nav-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .nav-item.active { background: rgba(255,255,255,0.12); color: #fff; font-weight: 600; }
+
+    .nav-item svg { width: 16px; height: 16px; opacity: 0.7; flex-shrink: 0; }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sidebar-footer a, .sidebar-footer button {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.5);
+      text-decoration: none;
+      cursor: pointer;
+      background: none;
+      border: none;
+      padding: 0;
+      text-align: left;
+      transition: color 0.15s;
+    }
+
+    .sidebar-footer a:hover, .sidebar-footer button:hover { color: rgba(255,255,255,0.9); }
+
+    /* Admin Content */
+    .admin-content {
+      flex: 1;
+      background: var(--bg);
+      overflow-y: auto;
+    }
+
+    .admin-topbar {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    .admin-topbar strong { color: var(--text); }
+
+    .admin-section {
+      display: none;
+      padding: 32px;
+      max-width: 900px;
+    }
+
+    .admin-section.active { display: block; }
+
+    .section-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .section-subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-bottom: 28px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      margin-bottom: 20px;
+    }
+
+    /* Fragen-Liste */
+    .frage-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .frage-item:last-child { border-bottom: none; }
+
+    .frage-drag {
+      cursor: grab;
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .frage-drag:active { cursor: grabbing; }
+
+    .frage-body { flex: 1; min-width: 0; }
+
+    .frage-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .frage-meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      display: flex;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+
+    .badge-bewertung { background: var(--accent-light); color: var(--accent); }
+    .badge-freitext { background: #f0f7f0; color: #27ae60; }
+    .badge-pflicht { background: #fef9e7; color: #e67e22; }
+
+    .frage-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+    .icon-btn {
+      background: none;
+      border: 1.5px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 8px;
+      cursor: pointer;
+      color: var(--muted);
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+    }
+
+    .icon-btn:hover { background: var(--bg); color: var(--text); border-color: var(--text); }
+    .icon-btn.danger:hover { background: #fdf0ef; color: var(--danger); border-color: var(--danger); }
+    .icon-btn svg { width: 15px; height: 15px; }
+
+    /* Formular neue Frage */
+    .form-group { margin-bottom: 16px; }
+
+    .form-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      font-family: inherit;
+      background: var(--bg);
+      transition: border-color 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--accent);
+      background: var(--white);
+    }
+
+    .form-row { display: flex; gap: 16px; }
+    .form-row .form-group { flex: 1; }
+
+    .form-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .form-check input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--accent); }
+
+    /* Edit Inline */
+    .frage-edit-form {
+      background: var(--accent-light);
+      border-radius: 8px;
+      padding: 16px;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .frage-edit-form.open { display: block; }
+
+    /* Stats */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label { font-size: 0.8rem; color: var(--muted); }
+
+    /* Tabelle */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    thead th {
+      background: var(--bg);
+      padding: 10px 14px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid var(--border);
+    }
+
+    tbody td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: var(--bg); }
+
+    /* Star display */
+    .star-display { color: var(--accent); letter-spacing: 1px; }
+
+    /* Login */
+    #login-overlay {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .login-card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 48px;
+      width: 100%;
+      max-width: 380px;
+    }
+
+    .login-card h2 { font-size: 1.4rem; margin-bottom: 6px; }
+    .login-card p { color: var(--muted); font-size: 0.85rem; margin-bottom: 28px; }
+
+    .login-error {
+      background: #fdf0ef;
+      color: var(--danger);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 0.85rem;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* Toggle */
+    .toggle-wrap {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      display: inline-flex;
+      margin-bottom: 20px;
+    }
+
+    .toggle-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: none;
+      background: none;
+      font-size: 0.88rem;
+      cursor: pointer;
+      color: var(--muted);
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+
+    .toggle-btn.active {
+      background: var(--white);
+      color: var(--text);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--text);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .pub-card { padding: 28px 20px; }
+      .pub-card h1 { font-size: 1.4rem; }
+      .sidebar { width: 180px; }
+      .admin-section { padding: 20px 16px; }
+    }
+
+    @media (max-width: 480px) {
+      .admin-layout { flex-direction: column; }
+      .sidebar { width: 100%; min-height: auto; }
+      .sidebar-nav { display: flex; flex-wrap: wrap; padding: 8px; gap: 4px; }
+      .nav-item { width: auto; border-radius: 6px; padding: 8px 12px; font-size: 0.8rem; }
+      .nav-section { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════
+     ÖFFENTLICHE BEWERTUNGSMASKE
+════════════════════════════════════ -->
+<div id="public-view">
+  <header class="pub-header">
+    <div class="pub-logo">talsee<span>.</span></div>
+    <span onclick="showAdmin()" class="admin-link">Admin</span>
+  </header>
+
+  <main class="pub-main">
+    <div class="pub-card">
+
+      <!-- Formular -->
+      <div id="form-content">
+        <h1>Ihre Meinung ist&nbsp;uns wichtig.</h1>
+        <p class="subtitle">Helfen Sie uns, unsere Produkte und unseren Service kontinuierlich zu verbessern. Die Bewertung dauert nur wenige Minuten.</p>
+
+        <div id="questions-loading" class="loading-overlay">
+          <div class="spinner"></div>
+          <span>Fragen werden geladen…</span>
+        </div>
+
+        <div id="questions-container" style="display:none"></div>
+
+        <button class="btn btn-primary" id="submit-btn" onclick="submitBewertung()" style="display:none">
+          Bewertung absenden
+        </button>
+      </div>
+
+      <!-- Danke -->
+      <div class="danke-screen" id="danke-screen">
+        <div class="danke-icon">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h2>Herzlichen Dank!</h2>
+        <p>Ihre Bewertung wurde erfolgreich übermittelt. Wir schätzen Ihr Feedback sehr.</p>
+        <button class="btn btn-secondary" onclick="resetForm()">Neue Bewertung</button>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ═══════════════════════════════════
+     ADMIN – LOGIN
+════════════════════════════════════ -->
+<div id="login-overlay" style="display:none">
+  <div class="login-card">
+    <h2>Admin-Bereich</h2>
+    <p>talsee Kundenbewertung</p>
+    <div class="login-error" id="login-error">Ungültige Anmeldedaten.</div>
+    <div class="form-group">
+      <label class="form-label">Benutzername</label>
+      <input class="form-input" id="login-user" value="admin" />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Passwort</label>
+      <input class="form-input" type="password" id="login-pass" onkeydown="if(event.key==='Enter')doLogin()" />
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Anmelden</button>
+    <p style="margin-top:16px;font-size:0.78rem;color:var(--muted)">Standard: admin / talsee2024</p>
+    <button onclick="hideAdmin()" style="margin-top:8px;background:none;border:none;color:var(--muted);font-size:0.8rem;cursor:pointer">← Zur Bewertungsmaske</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════
+     ADMIN – DASHBOARD
+════════════════════════════════════ -->
+<div id="admin-view">
+  <div class="admin-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        talsee<span style="opacity:0.4">.</span>
+        <small>Admin-Bereich</small>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">Übersicht</div>
+        <button class="nav-item active" onclick="showSection('dashboard', this)">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+          Dashboard
+        </button>
+        <div class="nav-section">Verwaltung</div>
+        <button class="nav-item" onclick="showSection('fragen', this)">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Fragen verwalten
+        </button>
+        <button class="nav-item" onclick="showSection('auswertungen', this)">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          Auswertungen
+        </button>
+        <button class="nav-item" onclick="showSection('einstellungen', this)">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3"/></svg>
+          Einstellungen
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <a onclick="hideAdmin()">← Zur Bewertungsmaske</a>
+        <button onclick="doLogout()">Abmelden</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div class="admin-content">
+      <div class="admin-topbar">
+        Admin-Bereich · <strong id="topbar-section">Dashboard</strong>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="admin-section active" id="sec-dashboard">
+        <div class="section-title">Dashboard</div>
+        <p class="section-subtitle">Übersicht der eingegangenen Bewertungen.</p>
+
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card"><div class="stat-value" id="stat-total">–</div><div class="stat-label">Bewertungen gesamt</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-avg">–</div><div class="stat-label">Ø Bewertung</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-today">–</div><div class="stat-label">Heute</div></div>
+          <div class="stat-card"><div class="stat-value" id="stat-fragen">–</div><div class="stat-label">Aktive Fragen</div></div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+            <strong>Letzte Bewertungen</strong>
+            <button class="btn btn-secondary" style="padding:8px 14px;font-size:0.82rem" onclick="exportCSV()">CSV Export</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr id="dashboard-thead"></tr></thead>
+              <tbody id="dashboard-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fragen -->
+      <div class="admin-section" id="sec-fragen">
+        <div class="section-title">Fragen verwalten</div>
+        <p class="section-subtitle">Bearbeiten, hinzufügen und sortieren Sie die Fragen im Bewertungsformular.</p>
+
+        <div class="card" id="fragen-liste">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <strong>Aktive Fragen</strong>
+            <button class="btn btn-secondary" style="padding:8px 14px;font-size:0.82rem" onclick="toggleNeueFrageForm()">+ Frage hinzufügen</button>
+          </div>
+          <div id="fragen-items"></div>
+        </div>
+
+        <!-- Neue Frage -->
+        <div class="card" id="neue-frage-form" style="display:none">
+          <strong style="display:block;margin-bottom:16px">Neue Frage</strong>
+          <div class="form-group">
+            <label class="form-label">Fragetext</label>
+            <input class="form-input" id="nf-text" placeholder="z.B. Wie zufrieden sind Sie mit unserem Service?" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Typ</label>
+              <select class="form-select" id="nf-typ">
+                <option value="bewertung">Bewertung (Schlecht – Hervorragend)</option>
+                <option value="freitext">Freitext</option>
+              </select>
+            </div>
+            <div class="form-group" style="display:flex;align-items:flex-end;padding-bottom:2px">
+              <label class="form-check">
+                <input type="checkbox" id="nf-pflicht" checked />
+                Pflichtfeld
+              </label>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary" style="flex:1;padding:11px" onclick="addFrage()">Frage speichern</button>
+            <button class="btn btn-secondary" onclick="toggleNeueFrageForm()">Abbrechen</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auswertungen -->
+      <div class="admin-section" id="sec-auswertungen">
+        <div class="section-title">Auswertungen</div>
+        <p class="section-subtitle">Detaillierte Analyse aller eingegangenen Bewertungen.</p>
+
+        <div class="toggle-wrap">
+          <button class="toggle-btn active" onclick="setAuswertungView('tabelle', this)">Tabelle</button>
+          <button class="toggle-btn" onclick="setAuswertungView('zusammenfassung', this)">Zusammenfassung</button>
+        </div>
+
+        <div id="ausw-tabelle">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+              <strong>Alle Bewertungen</strong>
+              <button class="btn btn-secondary" style="padding:8px 14px;font-size:0.82rem" onclick="exportCSV()">CSV Export</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr id="ausw-thead"></tr></thead>
+                <tbody id="ausw-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="ausw-zusammenfassung" style="display:none" id="ausw-summary"></div>
+      </div>
+
+      <!-- Einstellungen -->
+      <div class="admin-section" id="sec-einstellungen">
+        <div class="section-title">Einstellungen</div>
+        <p class="section-subtitle">E-Mail-Benachrichtigungen und Admin-Zugang konfigurieren.</p>
+
+        <div class="card">
+          <strong style="display:block;margin-bottom:16px">E-Mail Einstellungen</strong>
+          <div class="form-group">
+            <label class="form-label">Empfänger-E-Mail</label>
+            <input class="form-input" id="set-email" placeholder="info@talsee.ch" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Betreff</label>
+            <input class="form-input" id="set-betreff" value="Neue talsee Kundenbewertung" />
+          </div>
+        </div>
+
+        <div class="card">
+          <strong style="display:block;margin-bottom:16px">Admin Passwort ändern</strong>
+          <div class="form-group">
+            <label class="form-label">Neues Passwort</label>
+            <input class="form-input" type="password" id="set-pw" placeholder="Neues Passwort" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Passwort bestätigen</label>
+            <input class="form-input" type="password" id="set-pw2" placeholder="Wiederholen" />
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="min-width:200px" onclick="saveEinstellungen()">Einstellungen speichern</button>
+        <p style="margin-top:12px;font-size:0.78rem;color:var(--muted)">Hinweis: E-Mail-Versand via mailto:. Für automatischen Versand ist ein SMTP-Dienst (z.B. EmailJS) nötig.</p>
+      </div>
+
+    </div><!-- /admin-content -->
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── STATE ─────────────────────────────────────────────────────────────
+let state = {
+  fragen: [],
+  antworten: [],
+  einstellungen: { email: '', betreff: 'Neue talsee Kundenbewertung' },
+  adminPassword: 'talsee2024',
+  loggedIn: false,
+  antwortValues: {}
+};
+
+// ─── API ───────────────────────────────────────────────────────────────
+async function apiGet() {
+  try {
+    const res = await fetch('/api/get-data');
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } catch (e) {
+    console.warn('API nicht verfügbar, nutze localStorage:', e.message);
+    return getLocalData();
+  }
+}
+
+async function apiSave(type, data, password) {
+  try {
+    const res = await fetch('/api/save-data', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, data, password })
+    });
+    if (res.status === 401) return { error: 'unauthorized' };
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    // Auch lokal speichern als Backup
+    saveLocalData(type, data);
+    return await res.json();
+  } catch (e) {
+    console.warn('API-Fehler, speichere lokal:', e.message);
+    saveLocalData(type, data);
+    return { success: true, local: true };
+  }
+}
+
+// localStorage Fallback
+function getLocalData() {
+  const defaultFragen = [
+    { id: 1, text: 'Wie zufrieden sind Sie mit der Qualität unserer Produkte?', typ: 'bewertung', pflicht: true },
+    { id: 2, text: 'Wie bewerten Sie unseren Kundenservice?', typ: 'bewertung', pflicht: true },
+    { id: 3, text: 'Würden Sie talsee weiterempfehlen?', typ: 'bewertung', pflicht: true },
+    { id: 4, text: 'Was hat Ihnen besonders gut gefallen oder was können wir verbessern?', typ: 'freitext', pflicht: false }
+  ];
+  return {
+    fragen: JSON.parse(localStorage.getItem('ts_fragen') || 'null') || defaultFragen,
+    antworten: JSON.parse(localStorage.getItem('ts_antworten') || '[]'),
+    einstellungen: JSON.parse(localStorage.getItem('ts_einstellungen') || 'null') || { email: '', betreff: 'Neue talsee Kundenbewertung' }
+  };
+}
+
+function saveLocalData(type, data) {
+  if (type === 'fragen') localStorage.setItem('ts_fragen', JSON.stringify(data));
+  if (type === 'antwort') {
+    const arr = JSON.parse(localStorage.getItem('ts_antworten') || '[]');
+    arr.push({ ...data, timestamp: new Date().toISOString() });
+    localStorage.setItem('ts_antworten', JSON.stringify(arr));
+  }
+  if (type === 'einstellungen') localStorage.setItem('ts_einstellungen', JSON.stringify(data));
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────────
+async function init() {
+  const data = await apiGet();
+  state.fragen = data.fragen || [];
+  state.antworten = data.antworten || [];
+  state.einstellungen = data.einstellungen || { email: '', betreff: 'Neue talsee Kundenbewertung' };
+  if (data.einstellungen?.adminPassword) state.adminPassword = data.einstellungen.adminPassword;
+  renderFormular();
+}
+
+// ─── ÖFFENTLICHES FORMULAR ─────────────────────────────────────────────
+function renderFormular() {
+  const container = document.getElementById('questions-container');
+  const loading = document.getElementById('questions-loading');
+  const submitBtn = document.getElementById('submit-btn');
+
+  loading.style.display = 'none';
+  container.style.display = 'block';
+  submitBtn.style.display = 'block';
+
+  state.antwortValues = {};
+  container.innerHTML = '';
+
+  state.fragen.forEach((frage, idx) => {
+    const block = document.createElement('div');
+    block.className = 'question-block';
+
+    const label = document.createElement('div');
+    label.className = 'question-label';
+    label.innerHTML = `${frage.text}${frage.pflicht ? ' <span class="req">*</span>' : ''}`;
+    block.appendChild(label);
+
+    if (frage.typ === 'bewertung') {
+      const stars = document.createElement('div');
+      stars.className = 'stars';
+      stars.id = 'stars-' + frage.id;
+
+      for (let s = 1; s <= 5; s++) {
+        const btn = document.createElement('button');
+        btn.className = 'star-btn';
+        btn.setAttribute('data-val', s);
+        btn.setAttribute('data-frage', frage.id);
+        btn.setAttribute('aria-label', s + ' von 5 Sternen');
+        btn.innerHTML = starSVG(false);
+        btn.onclick = () => setStar(frage.id, s);
+        stars.appendChild(btn);
+      }
+
+      const labels = document.createElement('div');
+      labels.className = 'star-labels';
+      labels.innerHTML = '<span>Schlecht</span><span>Hervorragend</span>';
+
+      block.appendChild(stars);
+      block.appendChild(labels);
+
+    } else {
+      const ta = document.createElement('textarea');
+      ta.className = 'ft';
+      ta.placeholder = 'Ihr Kommentar…';
+      ta.rows = 4;
+      ta.oninput = () => { state.antwortValues[frage.id] = ta.value; };
+      block.appendChild(ta);
+    }
+
+    container.appendChild(block);
+  });
+}
+
+function starSVG(filled) {
+  const fill = filled ? 'var(--star-active)' : 'none';
+  const stroke = filled ? 'var(--star-active)' : 'var(--star-inactive)';
+  return `<svg viewBox="0 0 24 24" fill="${fill}" stroke="${stroke}" stroke-width="1.5" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+  </svg>`;
+}
+
+function setStar(frageId, val) {
+  state.antwortValues[frageId] = val;
+  const container = document.getElementById('stars-' + frageId);
+  container.querySelectorAll('.star-btn').forEach(btn => {
+    const v = parseInt(btn.getAttribute('data-val'));
+    btn.innerHTML = starSVG(v <= val);
+  });
+}
+
+async function submitBewertung() {
+  // Validierung
+  for (const frage of state.fragen) {
+    if (frage.pflicht && !state.antwortValues[frage.id]) {
+      showToast('Bitte beantworten Sie alle Pflichtfelder.', 'error');
+      return;
+    }
+  }
+
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'Wird gesendet…';
+
+  const result = await apiSave('antwort', { antworten: { ...state.antwortValues } });
+
+  if (result.error) {
+    showToast('Fehler beim Senden. Bitte erneut versuchen.', 'error');
+    btn.disabled = false;
+    btn.textContent = 'Bewertung absenden';
+    return;
+  }
+
+  // E-Mail (mailto Fallback)
+  if (state.einstellungen.email) {
+    const body = state.fragen.map(f => {
+      const a = state.antwortValues[f.id];
+      return `${f.text}\n${f.typ === 'bewertung' ? '★'.repeat(a || 0) + '☆'.repeat(5 - (a || 0)) : (a || '–')}`;
+    }).join('\n\n');
+    window.location.href = `mailto:${state.einstellungen.email}?subject=${encodeURIComponent(state.einstellungen.betreff)}&body=${encodeURIComponent(body)}`;
+  }
+
+  document.getElementById('form-content').style.display = 'none';
+  document.getElementById('danke-screen').style.display = 'block';
+}
+
+function resetForm() {
+  document.getElementById('form-content').style.display = 'block';
+  document.getElementById('danke-screen').style.display = 'none';
+  document.getElementById('submit-btn').disabled = false;
+  document.getElementById('submit-btn').textContent = 'Bewertung absenden';
+  renderFormular();
+}
+
+// ─── ADMIN ─────────────────────────────────────────────────────────────
+function showAdmin() {
+  document.getElementById('login-overlay').style.display = 'flex';
+  document.getElementById('login-pass').focus();
+}
+
+function hideAdmin() {
+  document.getElementById('login-overlay').style.display = 'none';
+  document.getElementById('admin-view').style.display = 'none';
+  document.getElementById('public-view').style.display = 'flex';
+  state.loggedIn = false;
+}
+
+function doLogin() {
+  const user = document.getElementById('login-user').value;
+  const pass = document.getElementById('login-pass').value;
+  if (user === 'admin' && pass === state.adminPassword) {
+    state.loggedIn = true;
+    document.getElementById('login-overlay').style.display = 'none';
+    document.getElementById('public-view').style.display = 'none';
+    document.getElementById('admin-view').style.display = 'block';
+    loadAdminData();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+  }
+}
+
+function doLogout() {
+  hideAdmin();
+}
+
+async function loadAdminData() {
+  const data = await apiGet();
+  state.fragen = data.fragen || [];
+  state.antworten = data.antworten || [];
+  state.einstellungen = data.einstellungen || {};
+  if (data.einstellungen?.adminPassword) state.adminPassword = data.einstellungen.adminPassword;
+
+  renderDashboard();
+  renderFragenAdmin();
+  renderAuswertungen();
+  loadEinstellungenForm();
+}
+
+function showSection(id, btn) {
+  document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('sec-' + id).classList.add('active');
+  btn.classList.add('active');
+  document.getElementById('topbar-section').textContent = btn.textContent.trim();
+}
+
+// ─── DASHBOARD ─────────────────────────────────────────────────────────
+function renderDashboard() {
+  const antworten = state.antworten;
+  document.getElementById('stat-total').textContent = antworten.length;
+  document.getElementById('stat-fragen').textContent = state.fragen.length;
+
+  const today = new Date().toDateString();
+  const todayCount = antworten.filter(a => new Date(a.timestamp).toDateString() === today).length;
+  document.getElementById('stat-today').textContent = todayCount;
+
+  // Durchschnitt
+  let stars = [], count = 0;
+  antworten.forEach(a => {
+    Object.entries(a.antworten || {}).forEach(([id, val]) => {
+      const frage = state.fragen.find(f => f.id == id);
+      if (frage?.typ === 'bewertung' && typeof val === 'number') { stars.push(val); count++; }
+    });
+  });
+  document.getElementById('stat-avg').textContent = count > 0 ? (stars.reduce((a,b) => a+b, 0) / count).toFixed(1) : '–';
+
+  renderTable('dashboard-thead', 'dashboard-tbody', antworten.slice(-10).reverse());
+}
+
+function renderTable(theadId, tbodyId, antworten) {
+  const thead = document.getElementById(theadId);
+  const tbody = document.getElementById(tbodyId);
+
+  thead.innerHTML = '<th>Datum</th>' + state.fragen.map(f => `<th>${f.text.substring(0, 30)}…</th>`).join('');
+  tbody.innerHTML = '';
+
+  if (antworten.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${state.fragen.length + 1}" style="text-align:center;color:var(--muted);padding:24px">Noch keine Bewertungen vorhanden.</td></tr>`;
+    return;
+  }
+
+  antworten.forEach(a => {
+    const tr = document.createElement('tr');
+    const date = new Date(a.timestamp).toLocaleDateString('de-CH', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' });
+    tr.innerHTML = `<td style="white-space:nowrap;color:var(--muted)">${date}</td>` +
+      state.fragen.map(f => {
+        const val = (a.antworten || {})[f.id];
+        if (f.typ === 'bewertung') {
+          const n = parseInt(val) || 0;
+          return `<td><span class="star-display">${'★'.repeat(n)}${'☆'.repeat(5-n)}</span></td>`;
+        }
+        return `<td>${val || '<span style="color:var(--muted)">–</span>'}</td>`;
+      }).join('');
+    tbody.appendChild(tr);
+  });
+}
+
+// ─── FRAGEN ────────────────────────────────────────────────────────────
+function renderFragenAdmin() {
+  const container = document.getElementById('fragen-items');
+  container.innerHTML = '';
+
+  if (state.fragen.length === 0) {
+    container.innerHTML = '<p style="color:var(--muted);padding:16px 0">Noch keine Fragen vorhanden.</p>';
+    return;
+  }
+
+  state.fragen.forEach((frage, idx) => {
+    const item = document.createElement('div');
+    item.className = 'frage-item';
+    item.setAttribute('data-id', frage.id);
+
+    item.innerHTML = `
+      <div class="frage-drag" title="Ziehen zum Sortieren">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" width="16" height="16">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8h16M4 16h16"/>
+        </svg>
+      </div>
+      <div class="frage-body">
+        <div class="frage-text">${frage.text}</div>
+        <div class="frage-meta">
+          <span class="badge badge-${frage.typ}">${frage.typ === 'bewertung' ? '★ Bewertung' : '✎ Freitext'}</span>
+          ${frage.pflicht ? '<span class="badge badge-pflicht">Pflichtfeld</span>' : ''}
+        </div>
+        <div class="frage-edit-form" id="edit-${frage.id}">
+          <div class="form-group" style="margin-bottom:10px">
+            <input class="form-input" id="ef-text-${frage.id}" value="${frage.text.replace(/"/g,'&quot;')}" />
+          </div>
+          <div class="form-row" style="margin-bottom:10px">
+            <div class="form-group" style="margin-bottom:0">
+              <select class="form-select" id="ef-typ-${frage.id}">
+                <option value="bewertung" ${frage.typ==='bewertung'?'selected':''}>Bewertung</option>
+                <option value="freitext" ${frage.typ==='freitext'?'selected':''}>Freitext</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;display:flex;align-items:center">
+              <label class="form-check">
+                <input type="checkbox" id="ef-pflicht-${frage.id}" ${frage.pflicht?'checked':''} />
+                Pflichtfeld
+              </label>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary" style="padding:8px 16px;font-size:0.85rem" onclick="saveFrage(${frage.id})">Speichern</button>
+            <button class="btn btn-secondary" style="padding:8px 16px;font-size:0.85rem" onclick="toggleEdit(${frage.id})">Abbrechen</button>
+          </div>
+        </div>
+      </div>
+      <div class="frage-actions">
+        <button class="icon-btn" onclick="toggleEdit(${frage.id})" title="Bearbeiten">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+        </button>
+        <button class="icon-btn danger" onclick="deleteFrage(${frage.id})" title="Löschen">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+        </button>
+      </div>`;
+
+    container.appendChild(item);
+  });
+}
+
+function toggleEdit(id) {
+  const el = document.getElementById('edit-' + id);
+  el.classList.toggle('open');
+}
+
+async function saveFrage(id) {
+  const idx = state.fragen.findIndex(f => f.id === id);
+  if (idx === -1) return;
+  state.fragen[idx].text = document.getElementById('ef-text-' + id).value.trim();
+  state.fragen[idx].typ = document.getElementById('ef-typ-' + id).value;
+  state.fragen[idx].pflicht = document.getElementById('ef-pflicht-' + id).checked;
+
+  const res = await apiSave('fragen', state.fragen, state.adminPassword);
+  if (res.error === 'unauthorized') { showToast('Falsches Passwort.', 'error'); return; }
+  showToast(res.local ? 'Lokal gespeichert (API nicht verbunden)' : 'Frage gespeichert!', res.local ? '' : 'success');
+  renderFragenAdmin();
+  renderFormular();
+}
+
+async function deleteFrage(id) {
+  if (!confirm('Frage wirklich löschen?')) return;
+  state.fragen = state.fragen.filter(f => f.id !== id);
+  const res = await apiSave('fragen', state.fragen, state.adminPassword);
+  showToast(res.local ? 'Lokal gespeichert' : 'Frage gelöscht!', res.local ? '' : 'success');
+  renderFragenAdmin();
+  renderFormular();
+}
+
+function toggleNeueFrageForm() {
+  const el = document.getElementById('neue-frage-form');
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+  if (el.style.display === 'block') document.getElementById('nf-text').focus();
+}
+
+async function addFrage() {
+  const text = document.getElementById('nf-text').value.trim();
+  if (!text) { showToast('Bitte einen Fragetext eingeben.', 'error'); return; }
+
+  const maxId = state.fragen.reduce((m, f) => Math.max(m, f.id), 0);
+  state.fragen.push({
+    id: maxId + 1,
+    text,
+    typ: document.getElementById('nf-typ').value,
+    pflicht: document.getElementById('nf-pflicht').checked
+  });
+
+  const res = await apiSave('fragen', state.fragen, state.adminPassword);
+  showToast(res.local ? 'Lokal gespeichert (API nicht verbunden)' : 'Frage hinzugefügt!', res.local ? '' : 'success');
+  document.getElementById('nf-text').value = '';
+  toggleNeueFrageForm();
+  renderFragenAdmin();
+  renderFormular();
+}
+
+// ─── AUSWERTUNGEN ──────────────────────────────────────────────────────
+function renderAuswertungen() {
+  renderTable('ausw-thead', 'ausw-tbody', state.antworten.slice().reverse());
+  renderZusammenfassung();
+}
+
+function renderZusammenfassung() {
+  const container = document.getElementById('ausw-zusammenfassung');
+  if (!container) return;
+  if (state.antworten.length === 0) {
+    container.innerHTML = '<div class="card"><p style="color:var(--muted)">Noch keine Bewertungen vorhanden.</p></div>';
+    return;
+  }
+
+  let html = '';
+  state.fragen.forEach(frage => {
+    const vals = state.antworten.map(a => (a.antworten || {})[frage.id]).filter(v => v !== undefined);
+    if (frage.typ === 'bewertung') {
+      const nums = vals.filter(v => typeof v === 'number');
+      const avg = nums.length ? (nums.reduce((a,b) => a+b, 0) / nums.length) : 0;
+      const dist = [1,2,3,4,5].map(s => nums.filter(v => v === s).length);
+      html += `<div class="card">
+        <strong>${frage.text}</strong>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:2rem;font-weight:700;color:var(--accent)">${avg.toFixed(1)}</span>
+          <span style="color:var(--muted);font-size:0.85rem">von 5 · ${nums.length} Antworten</span>
+        </div>
+        <div style="margin-top:12px">
+          ${dist.map((c, i) => `
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span style="width:60px;font-size:0.8rem;color:var(--muted)">${'★'.repeat(i+1)}</span>
+              <div style="flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden">
+                <div style="height:100%;background:var(--accent);border-radius:4px;width:${nums.length ? (c/nums.length*100).toFixed(0) : 0}%"></div>
+              </div>
+              <span style="width:24px;text-align:right;font-size:0.8rem;color:var(--muted)">${c}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    } else {
+      const texts = vals.filter(v => v && typeof v === 'string');
+      html += `<div class="card">
+        <strong>${frage.text}</strong>
+        <div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+          ${texts.length === 0 ? '<p style="color:var(--muted);font-size:0.85rem">Keine Antworten.</p>' :
+            texts.map(t => `<div style="background:var(--bg);border-radius:6px;padding:10px 14px;font-size:0.9rem">${t}</div>`).join('')}
+        </div>
+      </div>`;
+    }
+  });
+  container.innerHTML = html;
+}
+
+function setAuswertungView(view, btn) {
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('ausw-tabelle').style.display = view === 'tabelle' ? 'block' : 'none';
+  document.getElementById('ausw-zusammenfassung').style.display = view === 'zusammenfassung' ? 'block' : 'none';
+}
+
+// ─── EINSTELLUNGEN ─────────────────────────────────────────────────────
+function loadEinstellungenForm() {
+  document.getElementById('set-email').value = state.einstellungen.email || '';
+  document.getElementById('set-betreff').value = state.einstellungen.betreff || 'Neue talsee Kundenbewertung';
+}
+
+async function saveEinstellungen() {
+  const pw = document.getElementById('set-pw').value;
+  const pw2 = document.getElementById('set-pw2').value;
+  if (pw && pw !== pw2) { showToast('Passwörter stimmen nicht überein.', 'error'); return; }
+
+  const newSettings = {
+    email: document.getElementById('set-email').value,
+    betreff: document.getElementById('set-betreff').value,
+    adminPassword: pw || state.adminPassword
+  };
+
+  const res = await apiSave('einstellungen', newSettings, state.adminPassword);
+  if (res.error === 'unauthorized') { showToast('Falsches Passwort.', 'error'); return; }
+
+  state.einstellungen = newSettings;
+  if (pw) state.adminPassword = pw;
+  document.getElementById('set-pw').value = '';
+  document.getElementById('set-pw2').value = '';
+  showToast(res.local ? 'Lokal gespeichert (API nicht verbunden)' : 'Einstellungen gespeichert!', res.local ? '' : 'success');
+}
+
+// ─── CSV ───────────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['Datum', ...state.fragen.map(f => f.text)];
+  const rows = state.antworten.map(a => {
+    const date = new Date(a.timestamp).toLocaleString('de-CH');
+    return [date, ...state.fragen.map(f => {
+      const val = (a.antworten || {})[f.id];
+      return f.typ === 'bewertung' ? (val || '') : (val || '');
+    })];
+  });
+
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'talsee-bewertungen.csv'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(() => { t.className = 'toast'; }, 3000);
+}
+
+// ─── START ─────────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
